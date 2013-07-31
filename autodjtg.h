@@ -41,3 +41,5 @@ int pipe_and_fork(void);
 void get_options(int argc, char** argv);
 
 void get_device_id(Device *device);
+
+void get_device_index(Device *device);

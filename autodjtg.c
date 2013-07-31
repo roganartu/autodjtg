@@ -26,7 +26,9 @@ int main(int argc, char** argv) {
     device = (Device*) malloc(sizeof(Device));
     get_device_id(device);
 
-    printf("Found device: %s\n", device->id);
+    printf("Found USB Device: %s\n", device->id);
+
+    get_device_index(device);
 
     free(device->id);
     free(device);
@@ -153,6 +155,82 @@ void get_device_id(Device *device) {
         device->id = (char *) malloc(device_id_len);
         strncpy(device->id, tmp + 8, device_id_len);
     }
+
+    free(combined);
+    close(pipe_id);
+}
+
+/* 
+ * ===  FUNCTION  ==============================================================
+ *         Name:  get_device_index
+ *
+ *  Description:  Calls `djtgcfg init` and looks for device indexes. Prompts
+ *                for user input if more than one index. Exits with error if
+ *                no devices found or djtgcfg is not installed.
+ * 
+ *      Version:  0.0.1
+ *       Params:  Device *device
+ *      Returns:  Device index from djtgcfg init
+ *        Usage:  get_device_index(Device *device)
+ *      Outputs:  N/A
+ *
+ *        Notes:  
+ * =============================================================================
+ */
+void get_device_index(Device *device) {
+    char* tmp, *cmp;
+    char* args[5];
+    char output[80];
+    char* combined;
+    int pipe_id, exit_status, i, response;
+    FILE *input;
+
+    pipe_id = pipe_and_fork();
+
+    if (childPid == 0) {
+        // Child process
+        args[0] = "djtgcfg";
+        args[1] = "init";
+        args[2] = "-d";
+        args[3] = device->id;
+        args[4] = (char*) 0;
+        execvp("djtgcfg", args);
+
+        // Should never happen normally
+        exit(999);
+    } else {
+        // Parent process
+        input = fdopen(pipe_id, "r");
+        combined = (char*) malloc(80);
+
+        while (fgets(output, 80, input) != NULL) {
+            combined = (char *) realloc(combined, strlen(combined) + 1 +
+                    strlen(output));
+            combined = strcat(combined, output);
+        }
+
+        wait(&exit_status);
+        childPid = 0;
+    }
+
+    cmp = malloc(22);
+    for (i = 1; i < 1000; i++) {
+        sprintf(cmp, "Found %d device(s):", i);
+        tmp = strstr(combined, cmp);
+        if (tmp != NULL)
+            break;
+    }
+    free(cmp);
+    printf("%s", tmp);
+
+    response = -1;
+    while (response < 0 || response > i - 1) {
+        printf("Which device would you like to program?: [0] ");
+        tmp = fgets(output, 80, stdin);
+        response = atoi(output);
+    }
+
+    device->index = response;
 
     free(combined);
     close(pipe_id);
