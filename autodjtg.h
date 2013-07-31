@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 typedef struct {
     int help;
@@ -24,6 +26,18 @@ typedef struct {
 } CmdArgs;
 CmdArgs cmd_args;
 
+typedef struct {
+    char* id;
+    char* file;
+    int index;
+} Device;
+
+pid_t childPid;
+
+void usage(void);
+
+int pipe_and_fork(void);
+
 void get_options(int argc, char** argv);
 
-void usage();
+void get_device_id(Device *device);
