@@ -14,3 +14,16 @@
  * =============================================================================
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    int help;
+    int clean;
+} CmdArgs;
+CmdArgs cmd_args;
+
+void get_options(int argc, char** argv);
+
+void usage();
