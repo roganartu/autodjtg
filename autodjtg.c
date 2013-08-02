@@ -15,8 +15,12 @@
  */
 #include "autodjtg.h"
 
+int retcode;
+
 int main(int argc, char** argv) {
     Device* device;
+
+    retcode = 0;
 
     get_options(argc, argv);
 
@@ -26,13 +30,19 @@ int main(int argc, char** argv) {
     device = (Device*) malloc(sizeof(Device));
     get_device_id(device);
 
+    if (device->id == NULL) {
+        retcode = 2;
+        goto cleanup;
+    }
+
     printf("Found USB Device: %s\n", device->id);
 
     get_device_index(device);
 
+cleanup:
     free(device->id);
     free(device);
-    return 0;
+    return retcode;
 }
 
 /* 
@@ -221,6 +231,14 @@ void get_device_index(Device *device) {
             break;
     }
     free(cmp);
+    free(combined);
+    close(pipe_id);
+
+    if (tmp == NULL) {
+        printf("%s\n", "No indexes found. Is device switched on?");
+        exit(5);
+    }
+
     printf("%s", tmp);
 
     response = -1;
@@ -231,9 +249,8 @@ void get_device_index(Device *device) {
     }
 
     device->index = response;
+}
 
-    free(combined);
-    close(pipe_id);
 }
 
 /* 
