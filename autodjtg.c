@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
 
     get_file_path(device);
 
+    program_device(device);
+
 cleanup:
     free(device->id);
     free(device->file);
@@ -256,7 +258,17 @@ void get_device_index(Device *device) {
         response = atoi(output);
     }
 
-    device->index = response;
+    device->index = (char *) malloc(strlen(output) + 1);
+    strcpy(device->index, output);
+
+    // Remove \n char
+    for (int i = 0; i <= strlen(device->index); i++) {
+        if (device->index[i] == '\n')
+            device->index[i] = '\0';
+    }
+
+    if (device->index[0] == 0)
+        device->index[0] = '0';
 }
 
 /* 
@@ -336,6 +348,47 @@ void get_file_path(Device *device) {
         free(files[x]);
     }
     free(files);
+}
+
+/* 
+ * ===  FUNCTION  ==============================================================
+ *         Name:  program_device
+ *
+ *  Description:  Programs the file found at device->file onto the given device.
+ *                There's no real reason to stay as this function here, and
+ *                often during programming there is input required so we'll just
+ *                exec with no fork.
+ *
+ *      Version:  0.0.1
+ *       Params:  Device *device
+ *      Returns:  void
+ *        Usage:  program_device( Device *device )
+ *      Outputs:  N/A
+ *
+ *        Notes:
+ * =============================================================================
+ */
+void program_device(Device *device) {
+    char* args[9];
+
+    args[0] = "djtgcfg";
+    args[1] = "prog";
+    args[2] = "-d";
+    args[3] = device->id;
+    args[4] = "-i";
+    args[5] = device->index;
+    args[6] = "-f";
+    args[7] = device->file;
+    args[8] = (char*) 0;
+
+    execvp("djtgcfg", args);
+
+    // Should never happen normally
+    printf("There was an error executing: ");
+    for (int i = 0; i < 8; i++)
+        printf("%s ", args[i]);
+    printf("\n");
+    exit(999);
 }
 
 /* 

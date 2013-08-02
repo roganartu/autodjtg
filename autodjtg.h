@@ -30,7 +30,7 @@ CmdArgs cmd_args;
 typedef struct {
     char* id;
     char* file;
-    int index;
+    char* index;
 } Device;
 
 pid_t childPid;
@@ -46,3 +46,5 @@ void get_device_id(Device *device);
 void get_device_index(Device *device);
 
 void get_file_path(Device *device);
+
+void program_device(Device *device);
