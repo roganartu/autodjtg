@@ -1,8 +1,9 @@
-TARGET  := autodjtg
-SRCS    := autodjtg.c
-OBJS    := ${SRCS:.c=.o} 
-DEPS    := ${SRCS:.c=.dep} 
-XDEPS   := $(wildcard ${DEPS}) 
+TARGET         := autodjtg
+INSTALL_TARGET := /usr/bin/${TARGET}
+SRCS           := autodjtg.c
+OBJS           := ${SRCS:.c=.o} 
+DEPS           := ${SRCS:.c=.dep} 
+XDEPS          := $(wildcard ${DEPS}) 
 
 CCFLAGS = -std=gnu99 -O2 -Wall -Werror -ggdb 
 LDFLAGS = 
@@ -24,7 +25,10 @@ ${OBJS}: %.o: %.c %.dep
 ${DEPS}: %.dep: %.c Makefile 
 		${CC} ${CCFLAGS} -MM $< > $@ 
 
+install: ${TARGET}
+		-cp ${TARGET} ${INSTALL_TARGET}
+
 clean:: 
-		-rm -f *~ *.o ${TARGET} 
+		-rm -f *~ *.o ${TARGET} ${INSTALL_TARGET}
 
 distclean:: clean
