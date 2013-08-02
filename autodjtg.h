@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -43,3 +44,5 @@ void get_options(int argc, char** argv);
 void get_device_id(Device *device);
 
 void get_device_index(Device *device);
+
+void get_file_path(Device *device);

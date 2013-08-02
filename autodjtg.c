@@ -39,8 +39,16 @@ int main(int argc, char** argv) {
 
     get_device_index(device);
 
+    if (device->index < 0) {
+        retcode = 3;
+        goto cleanup;
+    }
+
+    get_file_path(device);
+
 cleanup:
     free(device->id);
+    free(device->file);
     free(device);
     return retcode;
 }
@@ -251,6 +259,83 @@ void get_device_index(Device *device) {
     device->index = response;
 }
 
+/* 
+ * ===  FUNCTION  ==============================================================
+ *         Name:  get_file_path
+ *
+ *  Description:  Traverses the current directory for .bit files and prompts
+ *                the user to choose which one to program the board with.
+ * 
+ *      Version:  0.0.1
+ *       Params:  Device *device
+ *      Returns:  void
+ *        Usage:  get_file_path( Device *device )
+ *      Outputs:  Prompts user to choose which file
+ *
+ *        Notes:  
+ * =============================================================================
+ */
+void get_file_path(Device *device) {
+    DIR           *d;
+    struct dirent *dir;
+    char cwd[1024], *bstring, output[80];
+    char** files;
+    int i, response;
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        printf("%s\n", "Error getting cwd");
+        exit(9);
+    }
+
+    files = (char **) malloc(sizeof(char *) * 1);
+
+    i = 0;
+    d = opendir(".");
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_type == DT_REG) {
+                if ((bstring = strstr(dir->d_name, ".bit")) != NULL) {
+                    if (strcmp(bstring, ".bit") == 0) {
+                        files = (char **) realloc(files, sizeof(char *) * (i + 1));
+                        files[i] = (char *) malloc(strlen(dir->d_name) + 1);
+                        strcpy(files[i++], dir->d_name);
+                    }
+                }
+            }
+        }
+
+        closedir(d);
+    }
+
+    if (i == 0) {
+        printf("%s\n", "No .bit files found");
+        free(files);
+        exit(4);
+    }
+
+    // Prompt to choose file
+    printf("Found %d file(s):\n", i);
+    for (int x = 0; x < i; x++) {
+        printf("    [%d] %s/%s\n", x, cwd, files[x]);
+    }
+
+    response = -1;
+    while (response < 0 || response > i - 1) {
+        printf("Which file would you like to program onto the device?: [0] ");
+        if (fgets(output, 80, stdin) != NULL)
+            response = atoi(output);
+    }
+
+    device->file = (char *) malloc(strlen(files[response]) + strlen(cwd) + 2);
+    strcpy(device->file, cwd);
+    strcat(device->file, "/");
+    strcat(device->file, files[response]);
+
+    // Free files array
+    for (int x = 0; x < i; x++) {
+        free(files[x]);
+    }
+    free(files);
 }
 
 /* 
